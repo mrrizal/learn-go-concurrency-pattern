@@ -4,7 +4,7 @@ import "fmt"
 
 func Example() {
 	/*
-		as you can see, there is shared variable between function in this example
+		as you can see, there is no shared variable between function in this example
 	*/
 	chanOwner := func() <-chan int {
 		results := make(chan int, 5)

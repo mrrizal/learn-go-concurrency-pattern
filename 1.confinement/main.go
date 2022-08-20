@@ -1,8 +1,6 @@
 package main
 
-import (
-	examplelexical "github.com/mrrizal/learn-go-concurrency-pattern/1.confinement/example_lexical"
-)
+import "fmt"
 
 func main() {
 	/*
@@ -20,5 +18,82 @@ func main() {
 	*/
 
 	// exampleadhoc.Example()
-	examplelexical.Example()
+	// examplelexical.Example()
+
+	// another example that proof, not using confinement is bad idea, the result will be inconsisstent
+	// var counter int
+	// incrementFunc := func() {
+	// 	counter += 1
+	// }
+
+	// for i := 0; i < 100; i++ {
+	// 	go incrementFunc()
+	// }
+
+	// fmt.Println(counter)
+
+	// you may think, not all goroutines finished,
+	// even when we try to use wait group to make sure all goroutines is done, the result still will be inconsistent
+	// var counter int
+	// var wg sync.WaitGroup
+
+	// incrementFunc := func() {
+	// 	defer wg.Done()
+	// 	counter += 1
+	// }
+
+	// for i := 0; i < 100; i++ {
+	// 	wg.Add(1)
+	// 	go incrementFunc()
+	// }
+
+	// wg.Wait()
+	// fmt.Println(counter)
+
+	// let's try using mutex to handle this and use wait group to make sure all goroutines is called.
+	// but using this approach, is same as sequantial, it's because only 1 gourtine can access the acouter at one time,
+	// and the rest will be wait until the current goroutine is done.
+	// type SafeCounter struct {
+	// 	counter int
+	// 	mu      sync.Mutex
+	// }
+
+	// var safeCounter SafeCounter
+	// var wg sync.WaitGroup
+
+	// incrementFunc := func() {
+	// 	defer wg.Done()
+	// 	safeCounter.mu.Lock()
+	// 	safeCounter.counter += 1
+	// 	safeCounter.mu.Unlock()
+	// }
+
+	// for i := 0; i < 100; i++ {
+	// 	wg.Add(1)
+	// 	go incrementFunc()
+	// }
+
+	// wg.Wait()
+	// fmt.Println(safeCounter.counter)
+
+	// confinement applied, as you can see, counter variable only used when read value from channel
+	// the channel itself, is can only write by incrementFunc
+	var counter int
+
+	incrementFunc := func() <-chan int {
+		result := make(chan int)
+		go func() {
+			defer close(result)
+			for i := 0; i < 100; i++ {
+				result <- 1
+			}
+		}()
+		return result
+	}
+
+	result := incrementFunc()
+	for val := range result {
+		counter += val
+	}
+	fmt.Println(counter)
 }
