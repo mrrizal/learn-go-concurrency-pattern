@@ -53,7 +53,10 @@ func main() {
 	}
 
 	done := make(chan interface{})
-	defer close(done)
+	defer func() {
+		fmt.Println("terakhir di esksekusi")
+		close(done)
+	}()
 
 	intStream := generators(done, 1, 2, 3, 4)
 	pipeline := multiply(done, add(done, multiply(done, intStream, 2), 1), 2)
@@ -61,4 +64,9 @@ func main() {
 	for v := range pipeline {
 		fmt.Println(v)
 	}
+
+	/*
+		just note, sebenernya kita ga ngirim data/ nge close channel done ketika running si pipeline.
+		channel done di close setelah kita nge consume data dari varible/channel pipeline.
+	*/
 }
